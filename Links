@@ -1,12 +1,13 @@
 import time
-import webbrowser
+import requests
 
-url = "https://www.stylink.it/rPpyXHQRrvy"
+url = "https://DEINE-TEST-WEBSITE.de"
 
-while True:
-    for _ in range(3):
-        webbrowser.open(url)
-        time.sleep(1)
+for i in range(20):
+    try:
+        r = requests.get(url, timeout=10)
+        print(f"Test {i+1}/20: {r.status_code}")
+    except requests.RequestException as e:
+        print(f"Test {i+1}/20: Fehler")
 
-    print("3x geöffnet. Warte 2 Minuten...")
-    time.sleep(120)
+    time.sleep(60)
