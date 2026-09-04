@@ -1,13 +1,157 @@
-import time
-import requests
-
-url = "https://www.stylink.it/rPpyXHQRrvy"
-
-for i in range(20):
-    try:
-        r = requests.get(url, timeout=10)
-        print(f"Test {i+1}/20: {r.status_code}")
-    except requests.RequestException as e:
-        print(f"Test {i+1}/20: Fehler")
-
-    time.sleep(60)
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Link Tester</title>
+    <style>
+        * {
+            box-sizing: border-box;
+        }
+        body {
+            margin: 0;
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-family: Arial, sans-serif;
+            background: #1877f2;
+        }
+        .box {
+            width: 90%;
+            max-width: 430px;
+            padding: 30px;
+            background: white;
+            border-radius: 18px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+        }
+        h1 {
+            text-align: center;
+            margin-top: 0;
+            color: #1877f2;
+        }
+        label {
+            display: block;
+            margin-top: 18px;
+            margin-bottom: 7px;
+            font-weight: bold;
+        }
+        input {
+            width: 100%;
+            padding: 13px;
+            border: 1px solid #ccc;
+            border-radius: 9px;
+            font-size: 16px;
+        }
+        button {
+            width: 100%;
+            margin-top: 24px;
+            padding: 14px;
+            border: none;
+            border-radius: 9px;
+            background: #1877f2;
+            color: white;
+            font-size: 17px;
+            font-weight: bold;
+            cursor: pointer;
+        }
+        button:hover {
+            background: #0d65d9;
+        }
+        button:disabled {
+            background: #999;
+            cursor: not-allowed;
+        }
+        #status {
+            margin-top: 20px;
+            text-align: center;
+            font-weight: bold;
+        }
+        #progress {
+            margin-top: 10px;
+            text-align: center;
+            color: #555;
+        }
+    </style>
+</head>
+<body>
+<div class="box">
+    <h1>Link Tester</h1>
+    <label for="url">Link</label>
+    <input
+        type="url"
+        id="url"
+        placeholder="https://deine-testseite.de"
+    >
+    <label for="amount">Wie oft soll getestet werden?</label>
+    <input
+        type="number"
+        id="amount"
+        min="1"
+        max="100"
+        value="20"
+    >
+    <label for="interval">Abstand in Sekunden</label>
+    <input
+        type="number"
+        id="interval"
+        min="1"
+        value="60"
+    >
+    <button id="startButton" onclick="startTest()">
+        Test starten
+    </button>
+    <div id="status"></div>
+    <div id="progress"></div>
+</div>
+<script>
+    async function startTest() {
+        const url = document.getElementById("url").value.trim();
+        const amount = Number(document.getElementById("amount").value);
+        const interval = Number(document.getElementById("interval").value);
+        const button = document.getElementById("startButton");
+        const status = document.getElementById("status");
+        const progress = document.getElementById("progress");
+        if (!url) {
+            status.textContent = "Bitte einen Link eingeben.";
+            return;
+        }
+        try {
+            new URL(url);
+        } catch {
+            status.textContent = "Bitte einen gültigen Link eingeben.";
+            return;
+        }
+        if (amount < 1 || interval < 1) {
+            status.textContent = "Anzahl und Abstand müssen mindestens 1 sein.";
+            return;
+        }
+        button.disabled = true;
+        status.textContent = "Test läuft...";
+        progress.textContent = `0 / ${amount}`;
+        for (let i = 1; i <= amount; i++) {
+            try {
+                await fetch(url, {
+                    method: "GET",
+                    mode: "cors",
+                    cache: "no-store"
+                });
+                status.textContent = "Anfrage erfolgreich gesendet.";
+            } catch (error) {
+                status.textContent =
+                    "Anfrage blockiert oder Zielseite nicht erreichbar.";
+            }
+            progress.textContent = `${i} / ${amount}`;
+            if (i < amount) {
+                await sleep(interval * 1000);
+            }
+        }
+        status.textContent = "Test abgeschlossen.";
+        button.disabled = false;
+    }
+    function sleep(ms) {
+        return new Promise(resolve => setTimeout(resolve, ms));
+    }
+</script>
+</body>
+</html>
