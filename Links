@@ -1,7 +1,7 @@
 import time
 import requests
 
-url = "https://DEINE-TEST-WEBSITE.de"
+url = "https://www.stylink.it/rPpyXHQRrvy"
 
 for i in range(20):
     try:
