@@ -1,157 +1,148 @@
 <!DOCTYPE html>
 <html lang="de">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Link Tester</title>
-    <style>
-        * {
-            box-sizing: border-box;
-        }
-        body {
-            margin: 0;
-            min-height: 100vh;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            font-family: Arial, sans-serif;
-            background: #1877f2;
-        }
-        .box {
-            width: 90%;
-            max-width: 430px;
-            padding: 30px;
-            background: white;
-            border-radius: 18px;
-            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
-        }
-        h1 {
-            text-align: center;
-            margin-top: 0;
-            color: #1877f2;
-        }
-        label {
-            display: block;
-            margin-top: 18px;
-            margin-bottom: 7px;
-            font-weight: bold;
-        }
-        input {
-            width: 100%;
-            padding: 13px;
-            border: 1px solid #ccc;
-            border-radius: 9px;
-            font-size: 16px;
-        }
-        button {
-            width: 100%;
-            margin-top: 24px;
-            padding: 14px;
-            border: none;
-            border-radius: 9px;
-            background: #1877f2;
-            color: white;
-            font-size: 17px;
-            font-weight: bold;
-            cursor: pointer;
-        }
-        button:hover {
-            background: #0d65d9;
-        }
-        button:disabled {
-            background: #999;
-            cursor: not-allowed;
-        }
-        #status {
-            margin-top: 20px;
-            text-align: center;
-            font-weight: bold;
-        }
-        #progress {
-            margin-top: 10px;
-            text-align: center;
-            color: #555;
-        }
-    </style>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Link Test</title>
+<style>
+    body {
+        margin: 0;
+        min-height: 100vh;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        font-family: Arial, sans-serif;
+        background: #1677ff;
+    }
+    .container {
+        width: 90%;
+        max-width: 420px;
+        background: white;
+        padding: 30px;
+        border-radius: 20px;
+        box-shadow: 0 10px 30px rgba(0,0,0,.25);
+    }
+    h1 {
+        text-align: center;
+        color: #1677ff;
+    }
+    label {
+        display: block;
+        margin-top: 18px;
+        margin-bottom: 7px;
+        font-weight: bold;
+    }
+    input {
+        width: 100%;
+        padding: 13px;
+        border: 1px solid #ccc;
+        border-radius: 8px;
+        font-size: 16px;
+    }
+    button {
+        width: 100%;
+        margin-top: 25px;
+        padding: 14px;
+        border: 0;
+        border-radius: 8px;
+        background: #1677ff;
+        color: white;
+        font-size: 17px;
+        font-weight: bold;
+        cursor: pointer;
+    }
+    button:disabled {
+        background: #999;
+    }
+    #status {
+        margin-top: 20px;
+        text-align: center;
+        font-weight: bold;
+    }
+    #counter {
+        margin-top: 10px;
+        text-align: center;
+        font-size: 18px;
+    }
+</style>
 </head>
 <body>
-<div class="box">
-    <h1>Link Tester</h1>
-    <label for="url">Link</label>
+<div class="container">
+    <h1>Link Test</h1>
+    <label>Link</label>
     <input
-        type="url"
         id="url"
+        type="url"
         placeholder="https://deine-testseite.de"
     >
-    <label for="amount">Wie oft soll getestet werden?</label>
+    <label>Anzahl der Tests</label>
     <input
-        type="number"
         id="amount"
+        type="number"
         min="1"
-        max="100"
+        max="200"
         value="20"
     >
-    <label for="interval">Abstand in Sekunden</label>
+    <label>Abstand in Sekunden</label>
     <input
+        id="delay"
         type="number"
-        id="interval"
         min="1"
         value="60"
     >
-    <button id="startButton" onclick="startTest()">
+    <button id="start" onclick="startTest()">
         Test starten
     </button>
     <div id="status"></div>
-    <div id="progress"></div>
+    <div id="counter">0 / 0</div>
 </div>
 <script>
-    async function startTest() {
-        const url = document.getElementById("url").value.trim();
-        const amount = Number(document.getElementById("amount").value);
-        const interval = Number(document.getElementById("interval").value);
-        const button = document.getElementById("startButton");
-        const status = document.getElementById("status");
-        const progress = document.getElementById("progress");
-        if (!url) {
-            status.textContent = "Bitte einen Link eingeben.";
-            return;
-        }
+async function startTest() {
+    const url = document.getElementById("url").value.trim();
+    const amount = Number(document.getElementById("amount").value);
+    const delay = Number(document.getElementById("delay").value);
+    const button = document.getElementById("start");
+    const status = document.getElementById("status");
+    const counter = document.getElementById("counter");
+    if (!url) {
+        status.textContent = "Bitte einen Link eingeben.";
+        return;
+    }
+    try {
+        new URL(url);
+    } catch {
+        status.textContent = "Ungültiger Link.";
+        return;
+    }
+    if (amount < 1 || amount > 200) {
+        status.textContent = "Die Anzahl muss zwischen 1 und 200 liegen.";
+        return;
+    }
+    button.disabled = true;
+    status.textContent = "Test läuft...";
+    counter.textContent = `0 / ${amount}`;
+    for (let i = 1; i <= amount; i++) {
         try {
-            new URL(url);
+            await fetch(url, {
+                method: "GET",
+                mode: "cors",
+                cache: "no-store"
+            });
+            status.textContent = "Anfrage gesendet.";
         } catch {
-            status.textContent = "Bitte einen gültigen Link eingeben.";
-            return;
+            status.textContent =
+                "Anfrage konnte nicht ausgeführt werden.";
         }
-        if (amount < 1 || interval < 1) {
-            status.textContent = "Anzahl und Abstand müssen mindestens 1 sein.";
-            return;
+        counter.textContent = `${i} / ${amount}`;
+        if (i < amount) {
+            await new Promise(resolve =>
+                setTimeout(resolve, delay * 1000)
+            );
         }
-        button.disabled = true;
-        status.textContent = "Test läuft...";
-        progress.textContent = `0 / ${amount}`;
-        for (let i = 1; i <= amount; i++) {
-            try {
-                await fetch(url, {
-                    method: "GET",
-                    mode: "cors",
-                    cache: "no-store"
-                });
-                status.textContent = "Anfrage erfolgreich gesendet.";
-            } catch (error) {
-                status.textContent =
-                    "Anfrage blockiert oder Zielseite nicht erreichbar.";
-            }
-            progress.textContent = `${i} / ${amount}`;
-            if (i < amount) {
-                await sleep(interval * 1000);
-            }
-        }
-        status.textContent = "Test abgeschlossen.";
-        button.disabled = false;
     }
-    function sleep(ms) {
-        return new Promise(resolve => setTimeout(resolve, ms));
-    }
+    status.textContent = "Test abgeschlossen.";
+    button.disabled = false;
+}
 </script>
 </body>
 </html>
