@@ -3,49 +3,57 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Link Test</title>
+<title>Link Tester</title>
 <style>
+    * {
+        box-sizing: border-box;
+    }
     body {
         margin: 0;
         min-height: 100vh;
         display: flex;
         justify-content: center;
         align-items: center;
+        background: #087cf5;
         font-family: Arial, sans-serif;
-        background: #1677ff;
     }
-    .container {
+    .card {
         width: 90%;
-        max-width: 420px;
-        background: white;
+        max-width: 430px;
         padding: 30px;
+        background: white;
         border-radius: 20px;
-        box-shadow: 0 10px 30px rgba(0,0,0,.25);
+        box-shadow: 0 12px 35px rgba(0,0,0,0.25);
     }
     h1 {
         text-align: center;
-        color: #1677ff;
+        margin-top: 0;
+        color: #087cf5;
     }
     label {
         display: block;
-        margin-top: 18px;
-        margin-bottom: 7px;
+        margin-top: 20px;
+        margin-bottom: 8px;
         font-weight: bold;
     }
     input {
         width: 100%;
-        padding: 13px;
+        padding: 14px;
         border: 1px solid #ccc;
-        border-radius: 8px;
+        border-radius: 10px;
         font-size: 16px;
+        outline: none;
+    }
+    input:focus {
+        border-color: #087cf5;
     }
     button {
         width: 100%;
-        margin-top: 25px;
         padding: 14px;
-        border: 0;
-        border-radius: 8px;
-        background: #1677ff;
+        margin-top: 25px;
+        border: none;
+        border-radius: 10px;
+        background: #087cf5;
         color: white;
         font-size: 17px;
         font-weight: bold;
@@ -53,95 +61,107 @@
     }
     button:disabled {
         background: #999;
+        cursor: not-allowed;
     }
     #status {
-        margin-top: 20px;
         text-align: center;
+        margin-top: 20px;
         font-weight: bold;
     }
     #counter {
-        margin-top: 10px;
         text-align: center;
-        font-size: 18px;
+        margin-top: 10px;
+        font-size: 20px;
     }
 </style>
 </head>
 <body>
-<div class="container">
-    <h1>Link Test</h1>
-    <label>Link</label>
+<div class="card">
+    <h1>Link Tester</h1>
+    <label for="url">Link eingeben</label>
     <input
         id="url"
         type="url"
         placeholder="https://deine-testseite.de"
+        autocomplete="off"
     >
-    <label>Anzahl der Tests</label>
+    <label for="amount">Wie oft testen?</label>
     <input
         id="amount"
         type="number"
         min="1"
-        max="200"
-        value="20"
+        max="100"
+        value="100"
     >
-    <label>Abstand in Sekunden</label>
-    <input
-        id="delay"
-        type="number"
-        min="1"
-        value="60"
-    >
-    <button id="start" onclick="startTest()">
+    <button id="startButton">
         Test starten
     </button>
-    <div id="status"></div>
-    <div id="counter">0 / 0</div>
+    <div id="status">Bereit</div>
+    <div id="counter">0 / 100</div>
 </div>
 <script>
+const urlInput = document.getElementById("url");
+const amountInput = document.getElementById("amount");
+const startButton = document.getElementById("startButton");
+const statusText = document.getElementById("status");
+const counter = document.getElementById("counter");
+startButton.addEventListener("click", startTest);
 async function startTest() {
-    const url = document.getElementById("url").value.trim();
-    const amount = Number(document.getElementById("amount").value);
-    const delay = Number(document.getElementById("delay").value);
-    const button = document.getElementById("start");
-    const status = document.getElementById("status");
-    const counter = document.getElementById("counter");
+    const url = urlInput.value.trim();
+    const amount = Number(amountInput.value);
     if (!url) {
-        status.textContent = "Bitte einen Link eingeben.";
+        statusText.textContent = "Bitte einen Link eingeben.";
         return;
     }
     try {
         new URL(url);
     } catch {
-        status.textContent = "Ungültiger Link.";
+        statusText.textContent = "Bitte einen gültigen Link eingeben.";
         return;
     }
-    if (amount < 1 || amount > 200) {
-        status.textContent = "Die Anzahl muss zwischen 1 und 200 liegen.";
+    if (!Number.isInteger(amount) || amount < 1 || amount > 100) {
+        statusText.textContent = "Bitte eine Zahl zwischen 1 und 100 eingeben.";
         return;
     }
-    button.disabled = true;
-    status.textContent = "Test läuft...";
+    startButton.disabled = true;
+    let successful = 0;
+    let failed = 0;
     counter.textContent = `0 / ${amount}`;
+    statusText.textContent = "Test läuft...";
     for (let i = 1; i <= amount; i++) {
         try {
-            await fetch(url, {
+            const response = await fetch(url, {
                 method: "GET",
                 mode: "cors",
                 cache: "no-store"
             });
-            status.textContent = "Anfrage gesendet.";
-        } catch {
-            status.textContent =
-                "Anfrage konnte nicht ausgeführt werden.";
+            if (response.ok) {
+                successful++;
+            } else {
+                failed++;
+            }
+        } catch (error) {
+            failed++;
         }
         counter.textContent = `${i} / ${amount}`;
+        statusText.textContent =
+            `Erfolgreich: ${successful} | Fehler: ${failed}`;
+        /*
+         * 2 Minuten zwischen den Tests.
+         * Der letzte Test wartet nicht mehr.
+         */
         if (i < amount) {
-            await new Promise(resolve =>
-                setTimeout(resolve, delay * 1000)
-            );
+            await wait(120000);
         }
     }
-    status.textContent = "Test abgeschlossen.";
-    button.disabled = false;
+    statusText.textContent =
+        `Fertig! Erfolgreich: ${successful} | Fehler: ${failed}`;
+    startButton.disabled = false;
+}
+function wait(milliseconds) {
+    return new Promise(resolve => {
+        setTimeout(resolve, milliseconds);
+    });
 }
 </script>
 </body>
