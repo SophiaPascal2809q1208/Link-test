@@ -1,0 +1,12 @@
+import time
+import webbrowser
+
+url = "https://www.stylink.it/rPpyXHQRrvy"
+
+while True:
+    for _ in range(3):
+        webbrowser.open(url)
+        time.sleep(1)
+
+    print("3x geöffnet. Warte 2 Minuten...")
+    time.sleep(120)
